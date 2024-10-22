@@ -28,7 +28,7 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Run a multi-line script
         run: 
-          gcc -o stress-test ../../benchmark/stress-test.c
-          gcc -o ema-search-str ../../benchmark/ema-search-str.c
-          gcc -o short-path ../../benchmark/short-path.c
+          gcc -o stress-test ./benchmark/stress-test.c
+          gcc -o ema-search-str ./benchmark/ema-search-str.c
+          gcc -o short-path ./benchmark/short-path.c
           
