@@ -37,6 +37,6 @@ jobs:
           gcc -o ema-search-str ./benchmark/ema-search-str.c
       - name: Compile path
         run: 
-          gcc -o short-path ./benchmark/short-path.c.
+          gcc -o short-path ./benchmark/short-path.c
 
           
