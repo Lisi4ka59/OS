@@ -12,7 +12,7 @@ local command=$1
 local expected_output=$2
 
 # Запуск программы и захват вывода
-output=$(./myshell <<EOF
+output=$(./main <<EOF
 $command
 exit
 EOF
