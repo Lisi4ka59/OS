@@ -65,7 +65,7 @@ jobs:
 
         run: |
           SUBSTRING=$(cat benchmark/substring.txt)
-          ./stress-test benchmark/test.txt "$SUBSTRING" 1 > output.txt 2>&1 || exit 1
+          ./stress-test benchmark/test.txt "$SUBSTRING" > output.txt 2>&1 || exit 1
           if [ -s output.txt ]; then
           echo "Test failed: Program produced output or error"
           cat output.txt
