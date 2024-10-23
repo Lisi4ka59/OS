@@ -6,7 +6,7 @@ name: Smoke Tests
 on:
   # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
-    branches: [ "main", "lab1" ]
+    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
@@ -26,9 +26,57 @@ jobs:
       - uses: actions/checkout@v4
 
       # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      - name: Install
         run: 
-          gcc -o stress-test benchmark/stress-test.c
-          gcc -o ema-search-str benchmark/ema-search-str.c
-          gcc -o short-path benchmark/short-path.c
+          sudo apt-get install gcc
+      - name: Run shell test
+        run: |
+          chmod +x shell/shell-test.sh
+          ./shell/shell-test.sh
+          
+      - name: Compile stress
+        run: 
+          gcc -o stress-test ./benchmark/stress-test.c
+      - name: Compile search
+        run: 
+          gcc -o ema-search-str ./benchmark/ema-search-str.c
+      - name: Compile path
+        run: 
+          gcc -o short-path ./benchmark/short-path.c
+
+
+      - name: Run search test
+
+        run: |
+          SUBSTRING=$(cat benchmark/substring.txt)
+          ./ema-search-str benchmark/test.txt "$SUBSTRING" 1 > output.txt 2>&1 || exit 1
+          if [ -s output.txt ]; then
+          echo "Test failed: Program produced output or error"
+          cat output.txt
+          exit 1
+          fi
+
+      - name: Run path test
+
+        run: |
+          ./short-path 1000 > output.txt 2>&1 || exit 1
+          if [ -s output.txt ]; then
+          echo "Test failed: Program produced output or error"
+          cat output.txt
+          exit 1
+          fi
+
+      - name: Run stress test
+
+        run: |
+          SUBSTRING=$(cat benchmark/substring.txt)
+          ./stress-test benchmark/test.txt "$SUBSTRING" > output.txt 2>&1 || exit 1
+          if [ -s output.txt ]; then
+          echo "Test failed: Program produced output or error"
+          cat output.txt
+          exit 1
+          fi
+
+
+
           
