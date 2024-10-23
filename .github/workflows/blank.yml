@@ -39,4 +39,39 @@ jobs:
         run: 
           gcc -o short-path ./benchmark/short-path.c
 
+
+      - name: Run search test
+
+        run: |
+          SUBSTRING=$(cat substring.txt)
+          ./ema-search-str benchmark/test.txt "$SUBSTRING" 1 > output.txt 2>&1 || exit 1
+          if [ -s output.txt ]; then
+          echo "Test failed: Program produced output or error"
+          cat output.txt
+          exit 1
+          fi
+
+      - name: Run path test
+
+        run: |
+          ./short-path 1000 > output.txt 2>&1 || exit 1
+          if [ -s output.txt ]; then
+          echo "Test failed: Program produced output or error"
+          cat output.txt
+          exit 1
+          fi
+
+      - name: Run stress test
+
+        run: |
+          SUBSTRING=$(cat substring.txt)
+          ./stress-test benchmark/test.txt "$SUBSTRING" 1 > output.txt 2>&1 || exit 1
+          if [ -s output.txt ]; then
+          echo "Test failed: Program produced output or error"
+          cat output.txt
+          exit 1
+          fi
+
+
+
           
