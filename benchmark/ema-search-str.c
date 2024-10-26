@@ -19,7 +19,12 @@ void search_substring(const char *filename, const char *substring, int repetitio
     ssize_t overlap = substring_len - 1;
 
     for (int rep = 0; rep < repetitions; rep++) {
-        lseek(fd, 0, SEEK_SET); // Сброс указателя файла в начало
+        // Сброс указателя файла в начало
+        if (lseek(fd, 0, SEEK_SET) == -1) {
+            perror("Error seeking in file");
+            close(fd);
+            exit(EXIT_FAILURE);
+        }
         ssize_t total_bytes_read = 0;
 
         while ((bytes_read = read(fd, buffer + total_bytes_read, BUFFER_SIZE)) > 0) {
