@@ -105,7 +105,7 @@ jobs:
           cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
           cmake --build build --target clean
           cmake --build build
-          find . -name '*.cpp' | xargs clang-tidy -p build
+          find . -name '*.cpp' | xargs clang-tidy -p build -warnings-as-errors=*
       - name: Build library
         run:
             g++ -fPIC -shared -g -o liblab2.so lab2/lab2.cpp
