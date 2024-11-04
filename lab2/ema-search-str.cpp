@@ -31,7 +31,6 @@ void search_substring(const char *filename, const char *substring, int repetitio
     ssize_t overlap = substring_len - 1;
 
     for (int rep = 0; rep < repetitions; rep++) {
-        // Reset file cursor to the beginning
         if (lab2_lseek(fd, 0, SEEK_SET) == -1) {
             std::cerr << "Error seeking in file" << std::endl;
             lab2_close(fd);

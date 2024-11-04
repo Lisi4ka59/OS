@@ -6,15 +6,15 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
-#include <cstdlib>  // For posix_memalign, exit
+#include <cstdlib>
 #include <atomic>
 
-const size_t GLOBAL_CACHE_SIZE = 4;   // Global limit on cache pages
-const size_t PAGE_SIZE = 4096;        // Example page size, aligned with typical file system block size
+const size_t GLOBAL_CACHE_SIZE = 4 * 16 * 50;   // Count of pages (50 Mb)
+const size_t PAGE_SIZE = 4096 * 16;        // Page size (4 Kb)
 const char *SHARED_MEMORY_NAME = "/globalCache_shm";
 
 struct CachePage {
-    char path[256];          // File path (fixed-size character array)
+    char path[256];          // File path
     off_t offset;            // Offset of this page in the file
     char *data;              // Data buffer of the page, aligned for direct I/O
     bool used;               // Used flag for clock policy
@@ -28,8 +28,8 @@ struct FileDescriptor {
 };
 
 struct SharedMemory {
-    std::atomic<int> refCount;      // Reference counter for active processes
-    CachePage cache[GLOBAL_CACHE_SIZE]; // Shared cache structure
+    std::atomic<int> refCount;           // Reference counter for active processes
+    CachePage cache[GLOBAL_CACHE_SIZE];  // Shared cache structure
 };
 
 std::unordered_map<int, FileDescriptor> fileDescriptors; // Map of descriptors to FileDescriptor info
@@ -40,7 +40,6 @@ const size_t SHARED_MEMORY_SIZE = sizeof(std::atomic<int>) + sizeof(CachePage) *
 
 extern "C" {
 
-// Forward declaration of manage_cache function
 void manage_cache(int fd, off_t offset, const char *data);
 
 // Initialize and attach shared memory
@@ -69,9 +68,9 @@ void attach_shared_memory() {
     if (sharedMemory->refCount == 0) {
         sharedMemory->refCount = 1;
         for (auto &page: sharedMemory->cache) {
-            std::memset(page.path, 0, sizeof(page.path));  // Initialize path to an empty string
+            std::memset(page.path, 0, sizeof(page.path));
             page.offset = 0;
-            page.data = nullptr;    // Set data pointer to nullptr
+            page.data = nullptr;
             page.used = false;
             page.dirty = false;
         }
@@ -134,7 +133,6 @@ ssize_t lab2_read(int fd, void *buf, size_t count) {
         return -1;
     }
 
-
     if (fileDescriptors.find(fd) == fileDescriptors.end()) {
         return -1;
     }
@@ -166,8 +164,6 @@ ssize_t lab2_read(int fd, void *buf, size_t count) {
         bool inCache = false;
 
         for (auto &page: sharedMemory->cache) {
-            // Check that page.path is non-empty before comparing
-
             if (std::strncmp(page.path, filePath.c_str(), sizeof(page.path)) == 0 && page.offset == pageOffset) {
                 inCache = true;
                 std::memcpy((char *) buf + bytesRead, page.data + pageStart, bytesToRead);
@@ -341,4 +337,4 @@ void manage_cache(int fd, off_t offset, const char *data) {
     }
 }
 
-} // End of extern "C"
+}
