@@ -16,7 +16,7 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
-  build:
+  test_lab1:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -77,6 +77,32 @@ jobs:
           exit 1
           fi
 
+  test_lab2:
 
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Install dependencies
+
+        run: sudo apt-get install -y build-essential
+
+      - name: Create build directory
+
+        run: mkdir build
+
+      - name: Configure CMake
+
+        run: cmake -S . -B build
+
+      - name: Build project
+
+        run: cmake --build build
+
+      - name: Run the program
+
+        run: |
+          cd build
+          LD_LIBRARY_PATH=. ./ema-search-str text.txt ausf 1
 
           
