@@ -31,25 +31,25 @@ jobs:
           sudo apt-get install gcc
       - name: Run shell test
         run: |
-          chmod +x shell/shell-test.sh
-          ./shell/shell-test.sh
+          chmod +x lab1/shell/shell-test.sh
+          ./lab1/shell/shell-test.sh
           
       - name: Compile stress
         run: 
-          gcc -o stress-test ./benchmark/stress-test.c
+          gcc -o stress-test ./lab1/benchmark/stress-test.c
       - name: Compile search
         run: 
-          gcc -o ema-search-str ./benchmark/ema-search-str.c
+          gcc -o ema-search-str ./lab1/benchmark/ema-search-str.c
       - name: Compile path
         run: 
-          gcc -o short-path ./benchmark/short-path.c
+          gcc -o short-path ./lab1/benchmark/short-path.c
 
 
       - name: Run search test
 
         run: |
           SUBSTRING=$(cat benchmark/substring.txt)
-          ./ema-search-str benchmark/test.txt "$SUBSTRING" 1 > output.txt 2>&1 || exit 1
+          ./ema-search-str lab1/benchmark/test.txt "$SUBSTRING" 1 > output.txt 2>&1 || exit 1
           if [ -s output.txt ]; then
           echo "Test failed: Program produced output or error"
           cat output.txt
@@ -70,7 +70,7 @@ jobs:
 
         run: |
           SUBSTRING=$(cat benchmark/substring.txt)
-          ./stress-test benchmark/test.txt "$SUBSTRING" > output.txt 2>&1 || exit 1
+          ./stress-test lab1/benchmark/test.txt "$SUBSTRING" > output.txt 2>&1 || exit 1
           if [ -s output.txt ]; then
           echo "Test failed: Program produced output or error"
           cat output.txt
