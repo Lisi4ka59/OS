@@ -48,7 +48,7 @@ jobs:
       - name: Run search test
 
         run: |
-          SUBSTRING=$(cat benchmark/substring.txt)
+          SUBSTRING=$(cat lab1/benchmark/substring.txt)
           ./ema-search-str lab1/benchmark/test.txt "$SUBSTRING" 1 > output.txt 2>&1 || exit 1
           if [ -s output.txt ]; then
           echo "Test failed: Program produced output or error"
@@ -69,7 +69,7 @@ jobs:
       - name: Run stress test
 
         run: |
-          SUBSTRING=$(cat benchmark/substring.txt)
+          SUBSTRING=$(cat lab1/benchmark/substring.txt)
           ./stress-test lab1/benchmark/test.txt "$SUBSTRING" > output.txt 2>&1 || exit 1
           if [ -s output.txt ]; then
           echo "Test failed: Program produced output or error"
