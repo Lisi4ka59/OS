@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Компиляция программы
-gcc -o main shell/main.c
+gcc -o main lab1/shell/main.c
 
 # Создание тестовых файлов
 echo "This is a test file with the word test in it." > testfile.txt
