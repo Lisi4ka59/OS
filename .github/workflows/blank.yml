@@ -86,22 +86,25 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
 
-      # Runs a set of commands using the runners shell
-      - name: Install
-        run:
-          sudo apt-get install g++
+        # Устанавливаем необходимые зависимости
       - name: Install dependencies
-        run: sudo apt-get install -y build-essential clang-format clang-tidy
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ build-essential clang-format clang-tidy
 
-      - name: Run clang-format
+      # Форматирование кода
+      - name: Format code with clang-format
         run: |
           clang-format --version
           find . -name '*.cpp' -o -name '*.h' | xargs clang-format -i
-      - name: Run clang-tidy
+
+      # Линтинг кода с помощью clang-tidy
+      - name: Lint code with clang-tidy
         run: |
           clang-tidy --version
+          cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
           cmake --build build --target clean
-          cmake --build build --target all -- -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build build
           find . -name '*.cpp' | xargs clang-tidy -p build
       - name: Build library
         run:
