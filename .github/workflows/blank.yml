@@ -90,6 +90,19 @@ jobs:
       - name: Install
         run:
           sudo apt-get install g++
+      - name: Install dependencies
+        run: sudo apt-get install -y build-essential clang-format clang-tidy
+
+      - name: Run clang-format
+        run: |
+          clang-format --version
+          find . -name '*.cpp' -o -name '*.h' | xargs clang-format -i
+      - name: Run clang-tidy
+        run: |
+          clang-tidy --version
+          cmake --build build --target clean
+          cmake --build build --target all -- -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          find . -name '*.cpp' | xargs clang-tidy -p build
       - name: Build library
         run:
             g++ -fPIC -shared -g -o liblab2.so lab2/lab2.cpp
