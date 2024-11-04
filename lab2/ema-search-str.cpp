@@ -15,8 +15,6 @@ ssize_t lab2_write(int fd, const void *buf, size_t count);
 off_t lab2_lseek(int fd, off_t offset, int whence);
 int lab2_fsync(int fd);
 void initialize_library();
-
-
 }
 
 void search_substring(const char *filename, const char *substring, int repetitions) {
@@ -44,13 +42,11 @@ void search_substring(const char *filename, const char *substring, int repetitio
         while ((bytes_read = lab2_read(fd, buffer + total_bytes_read, BUFFER_SIZE)) > 0) {
             total_bytes_read += bytes_read;
 
-            //std::cout << "buffer " << &buffer[1] << " " << bytes_read << "\n";
-
             for (ssize_t i = 0; i <= total_bytes_read - substring_len; i++) {
                 if (std::strncmp(&buffer[i], substring, substring_len) == 0) {
-                    std::cout << "Found substring at position "
-                              << i + lab2_lseek(fd, 0, SEEK_CUR) - total_bytes_read
-                              << " in repetition " << rep << std::endl;
+//                    std::cout << "Found substring at position "
+//                              << i + lab2_lseek(fd, 0, SEEK_CUR) - total_bytes_read
+//                              << " in repetition " << rep << std::endl;
                 }
             }
 

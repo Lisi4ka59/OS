@@ -83,26 +83,19 @@ jobs:
 
     steps:
 
-      - name: Install dependencies
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v4
 
-        run: sudo apt-get install -y build-essential
-
-      - name: Create build directory
-
-        run: mkdir build
-
-      - name: Configure CMake
-
-        run: cmake -S . -B build
-
-      - name: Build project
-
-        run: cmake --build build
-
-      - name: Run the program
-
-        run: |
-          cd build
-          LD_LIBRARY_PATH=. ./ema-search-str text.txt ausf 1
-
-          
+      # Runs a set of commands using the runners shell
+      - name: Install
+        run:
+          sudo apt-get install g++
+      - name: Build library
+        run:
+            g++ -fPIC -shared -g -o liblab2.so lab2/lab2.cpp
+      - name: Build ema-search-str
+        run:
+          g++ -g lab2/ema-search-str.cpp -L. -llab2 -o ema-search-str -lrt
+      - name: Run test
+        run:
+          LD_LIBRARY_PATH=. ./ema-search-str lab2/test.txt ausf 1
