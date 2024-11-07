@@ -117,7 +117,11 @@ jobs:
           LD_LIBRARY_PATH=. ./ema-search-str lab2/test.txt ausf 1
       - name: Run test 2
         run:
-          LD_LIBRARY_PATH=. ./ema-search-str lab2/test.txt a 2
+          LD_LIBRARY_PATH=. ./ema-search-str lab2/test.txt a 1 & LD_LIBRARY_PATH=. ./ema-search-str lab2/test.txt a 1 & wait
       - name: Run test 3
         run:
           LD_LIBRARY_PATH=. ./ema-search-str lab2/test.txt rrrrrrr 10
+      - name: Run test 4
+        run:
+          LD_LIBRARY_PATH=. ./ema-search-str lab2/test.txt aa 1 & LD_LIBRARY_PATH=. ./ema-search-str lab2/test.txt ragdf 1 &
+          LD_LIBRARY_PATH=. ./ema-search-str lab2/test.txt dfvtrdfgh 1 & LD_LIBRARY_PATH=. ./ema-search-str lab2/test.txt gg 1 & wait
