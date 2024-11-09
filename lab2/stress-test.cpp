@@ -21,10 +21,7 @@ void initialize_library();
 
 int main() {
     size_t buf_size = 1000000;
-    if (initialize_library() != 0) {
-        std::cerr << "Failed to initialize library.\n";
-        return 1;
-    }
+    initialize_library();
 
     auto start = std::chrono::high_resolution_clock::now();
 
