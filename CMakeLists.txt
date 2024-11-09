@@ -5,8 +5,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
-add_compile_options(-fsanitize=address -fsanitize=memory -fsanitize=thread)
-add_link_options(-fsanitize=address -fsanitize=memory -fsanitize=thread)
+add_compile_options(-fsanitize=address -fsanitize=thread)
+add_link_options(-fsanitize=address -fsanitize=thread)
 
 
 add_library(lab2 SHARED lab2/lab2.cpp)
