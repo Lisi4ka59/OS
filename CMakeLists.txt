@@ -51,3 +51,11 @@ add_custom_target(run_test_4
         LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/lib ${CMAKE_BINARY_DIR}/bin/ema-search-str lab2/test.txt gg 1 & wait
         DEPENDS ema-search-str lab2
 )
+
+enable_testing()
+
+
+add_test(NAME Test1 COMMAND ema-search-str ${CMAKE_SOURCE_DIR}/lab2/test.txt ausf 1)
+add_test(NAME Test2 COMMAND ema-search-str ${CMAKE_SOURCE_DIR}/lab2/test.txt a 1)
+add_test(NAME Test3 COMMAND ema-search-str ${CMAKE_SOURCE_DIR}/lab2/test.txt rrrrrrr 10)
+add_test(NAME Test4 COMMAND ema-search-str ${CMAKE_SOURCE_DIR}/lab2/test.txt aa 1)
