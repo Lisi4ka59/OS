@@ -77,28 +77,23 @@ jobs:
           exit 1
           fi
 
-  test_lab2:
 
+  test_lab2:
     runs-on: ubuntu-latest
 
     steps:
-
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
 
-        # Устанавливаем необходимые зависимости
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y g++ build-essential clang-format clang-tidy
+          sudo apt-get install -y g++ build-essential cmake clang-format clang-tidy
 
-      # Форматирование кода
       - name: Format code with clang-format
         run: |
           clang-format --version
           find . -name '*.cpp' -o -name '*.h' | xargs clang-format -i
 
-      # Линтинг кода с помощью clang-tidy
       - name: Lint code with clang-tidy
         run: |
           clang-tidy --version
@@ -106,22 +101,10 @@ jobs:
           cmake --build build --target clean
           cmake --build build
           find . -name '*.cpp' | xargs clang-tidy -p build -warnings-as-errors=*
-      - name: Build library
-        run:
-            g++ -fPIC -shared -g -o liblab2.so lab2/lab2.cpp
-      - name: Build ema-search-str
-        run:
-          g++ -g lab2/ema-search-str.cpp -L. -llab2 -o ema-search-str -lrt
-      - name: Run test 1
-        run:
-          LD_LIBRARY_PATH=. ./ema-search-str lab2/test.txt ausf 1
-      - name: Run test 2
-        run:
-          LD_LIBRARY_PATH=. ./ema-search-str lab2/test.txt a 1 & LD_LIBRARY_PATH=. ./ema-search-str lab2/test.txt a 1 & wait
-      - name: Run test 3
-        run:
-          LD_LIBRARY_PATH=. ./ema-search-str lab2/test.txt rrrrrrr 10
-      - name: Run test 4
-        run:
-          LD_LIBRARY_PATH=. ./ema-search-str lab2/test.txt aa 1 & LD_LIBRARY_PATH=. ./ema-search-str lab2/test.txt ragdf 1 &
-          LD_LIBRARY_PATH=. ./ema-search-str lab2/test.txt dfvtrdfgh 1 & LD_LIBRARY_PATH=. ./ema-search-str lab2/test.txt gg 1 & wait
+
+      - name: Build and run tests
+        run: |
+          cmake -S . -B build
+          cmake --build build
+          cd build
+          ctest --output-on-failure
