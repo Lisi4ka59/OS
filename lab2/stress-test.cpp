@@ -64,18 +64,19 @@ int main() {
         ssize_t bytes_read = lab2_read(fd, new_buffer, buf_size);
         if (bytes_read != buf_size) {
             std::cerr << "Error reading file.\n";
-            break;
+            return 1;
         }
 
         ssize_t control_bytes_read = pread(fd, new_control_buffer, buf_size, 0);
 
         if (control_bytes_read != buf_size) {
             std::cerr << "Error reading control file.\n";
-            break;
+            return 1;
         }
 
         if (memcmp(new_buffer, new_control_buffer, buf_size) != 0) {
             std::cerr << "Buffers are not equal.\n";
+            return 1;
         }
 
 
