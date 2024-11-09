@@ -125,7 +125,7 @@ int lab2_open(const char *path, int flags) {
 
     int realFd = open(path, flags | O_DIRECT, 0666);
     if (realFd != -1) {
-        fileDescriptors[realFd] = {.fd=realFd, .cursor=0, .file=filePath};
+        fileDescriptors[realFd] = {realFd, 0, filePath};
     }
     return realFd;
 }
