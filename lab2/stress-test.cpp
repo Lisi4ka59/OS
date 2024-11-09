@@ -25,7 +25,7 @@ int main() {
         return 1;
     }
 
-    auto start_time = std::chrono::steady_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
 
     int fd = lab2_open("testfile.txt", O_RDWR | O_CREAT);
     if (fd < 0) {
@@ -109,9 +109,8 @@ int main() {
         std::cerr << "Failed to close control file.\n";
         return 1;
     }
-    auto end_time = std::chrono::steady_clock::now();
-    auto duration = start_time - end_time;
-
-    std::cout << "Test completed after " << duration << " seconds.\n";
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> execution_time = end - start;
+    std::cout << "Test completed after " << execution_time.count() << " ms.\n" << std::endl;
     return 0;
 }
