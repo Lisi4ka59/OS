@@ -92,7 +92,7 @@ jobs:
       - name: Format code with clang-format
         run: |
           clang-format --version
-          find . -name '*.cpp' -o -name '*.h' | xargs clang-format -i
+          find . -name '*.cpp' -o -name '*.h' | xargs clang-format -i --dry-run
 
       - name: Lint code with clang-tidy
         run: |

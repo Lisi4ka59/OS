@@ -10,8 +10,8 @@
 #include <atomic>
 #include <pthread.h>
 
-const size_t GLOBAL_CACHE_SIZE = 16 * 16 * 50;   // Count of cache pages (50 MB)
-const size_t PAGE_SIZE = 4096;                   // Size of single page (4 KB)
+constexpr size_t GLOBAL_CACHE_SIZE = 16 * 16 * 50;   // Count of cache pages (50 MB)
+constexpr size_t PAGE_SIZE = 4096;                   // Size of single page (4 KB)
 const char* SHARED_MEMORY_NAME = "/globalCache_shm";
 
 struct CachePage {
@@ -38,7 +38,7 @@ struct SharedMemory {
 std::unordered_map<int, FileDescriptor> fileDescriptors;
 SharedMemory* sharedMemory = nullptr;
 
-const size_t SHARED_MEMORY_SIZE = sizeof(std::atomic<int>) + sizeof(std::atomic<size_t>) + sizeof(pthread_mutex_t) + sizeof(CachePage) * GLOBAL_CACHE_SIZE;
+constexpr size_t SHARED_MEMORY_SIZE = sizeof(std::atomic<int>) + sizeof(std::atomic<size_t>) + sizeof(pthread_mutex_t) + sizeof(CachePage) * GLOBAL_CACHE_SIZE;
 
 extern "C" {
 
