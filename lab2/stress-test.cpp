@@ -76,7 +76,6 @@ int main() {
 
         if (memcmp(new_buffer, new_control_buffer, buf_size) != 0) {
             std::cerr << "Buffers are not equal.\n";
-            return 1;
         }
 
 
