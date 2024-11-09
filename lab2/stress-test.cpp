@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <random>
 #include <fstream>
+#include <cstring>
 
 
 // Declare functions from the library
