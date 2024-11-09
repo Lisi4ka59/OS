@@ -64,14 +64,14 @@ int main() {
         ssize_t bytes_read = lab2_read(fd, new_buffer, buf_size);
         if (bytes_read != buf_size) {
             std::cerr << "Error reading file.\n";
-            return 1;
+            break;
         }
 
         ssize_t control_bytes_read = pread(fd, new_control_buffer, buf_size, 0);
 
         if (control_bytes_read != buf_size) {
             std::cerr << "Error reading control file.\n";
-            return 1;
+            break;
         }
 
         if (memcmp(new_buffer, new_control_buffer, buf_size) != 0) {
