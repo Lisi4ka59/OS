@@ -1,7 +1,6 @@
 #include <iostream>
 #include <unordered_map>
 #include <cstring>
-#include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -9,6 +8,9 @@
 #include <cstdlib>
 #include <atomic>
 #include <pthread.h>
+#include <vector>
+#include <unistd.h>
+#include <cerrno>
 
 constexpr size_t GLOBAL_CACHE_SIZE = 16 * 16 * 50;   // Count of cache pages (50 MB)
 constexpr size_t PAGE_SIZE = 4096;                   // Size of single page (4 KB)
@@ -74,8 +76,8 @@ void attach_shared_memory() {
 
     sharedMemory = static_cast<SharedMemory *>(ptr);
 
-    if (sharedMemory->refCount == 0) {
-        sharedMemory->refCount = 1;
+    if (sharedMemory->refCount.fetch_add(1) == 0) {
+
         sharedMemory->clockHand = 0;
 
         pthread_mutexattr_t attr;
@@ -90,8 +92,6 @@ void attach_shared_memory() {
             page.used = false;
             page.dirty = false;
         }
-    } else {
-        sharedMemory->refCount++;
     }
 }
 
@@ -130,105 +130,120 @@ int lab2_open(const char *path, int flags) {
     return realFd;
 }
 
-ssize_t lab2_read(int fd, void *buffer, size_t size) {
+
+ssize_t lab2_read(int fd, void *buf, size_t count) {
     if (!found_file_descriptor(fd)) return -1;
 
     FileDescriptor &fileDesc = fileDescriptors[fd];
-    size_t bytes_read = 0;
+    size_t bytes_read_total = 0;
+    std::vector<std::pair<char*, size_t>> temp_chunks;
 
     pthread_mutex_lock(&sharedMemory->mutex);
 
-    while (bytes_read < size) {
-        off_t offset = fileDesc.cursor / PAGE_SIZE * PAGE_SIZE;
+    while (bytes_read_total < count) {
+        off_t page_aligned_offset = fileDesc.cursor / PAGE_SIZE * PAGE_SIZE;
         size_t page_offset = fileDesc.cursor % PAGE_SIZE;
-        size_t bytes_to_read = std::min(PAGE_SIZE - page_offset, size - bytes_read);
+        size_t bytes_to_read = std::min(PAGE_SIZE - page_offset, count - bytes_read_total);
+
+        char* chunk;
+        posix_memalign(reinterpret_cast<void**>(&chunk), PAGE_SIZE, PAGE_SIZE);
 
         bool page_found = false;
         for (size_t i = 0; i < GLOBAL_CACHE_SIZE; i++) {
             CachePage &page = sharedMemory->cache[i];
-            if (page.used && page.offset == offset && strcmp(page.path, fileDesc.path.c_str()) == 0) {
-
-                memcpy(static_cast<char*>(buffer) + bytes_read, page.data + page_offset, bytes_to_read);
+            if (page.used && page.offset == page_aligned_offset &&
+                strcmp(page.path, fileDesc.path.c_str()) == 0) {
+                std::memcpy(chunk, page.data + page_offset, bytes_to_read);
                 page_found = true;
                 break;
             }
         }
 
         if (!page_found) {
+            lseek(fd, fileDesc.cursor, SEEK_SET);
+            ssize_t bytes_from_file = read(fd, chunk, bytes_to_read);
 
-            int file_fd = open(fileDesc.path.c_str(), O_RDONLY);
-            if (file_fd == -1) {
-                std::cerr << "Error: failed to open file for reading at offset " << offset << std::endl;
-                pthread_mutex_unlock(&sharedMemory->mutex);
-                return -1;
+
+            if (bytes_from_file <= 0) {
+                // std::cerr << "Read error or end of file reached; exiting read loop.\n"<<" bytes_read_total "<<bytes_read_total<<"\n";
+                // std::cerr << "fileDesc.cursor " <<fileDesc.cursor<<"\n";
+                // std::cerr << "fd " <<fd<<"\n";
+                // std::cerr << "Error: " << strerror(errno) << " (" << errno << ")\n";
+                delete[] chunk;
+                break;
             }
 
-            lseek(file_fd, offset, SEEK_SET);
-            char page_data[PAGE_SIZE];
-            ssize_t read_result = read(file_fd, page_data, PAGE_SIZE);
-            close(file_fd);
-
-            if (read_result == -1) {
-                std::cerr << "Error: failed to read data from disk at offset " << offset << std::endl;
-                pthread_mutex_unlock(&sharedMemory->mutex);
-                return -1;
+            if (bytes_from_file < bytes_to_read) {
+                std::memset(chunk + bytes_from_file, 0, bytes_to_read - bytes_from_file);
             }
-
-
-            memcpy(static_cast<char*>(buffer) + bytes_read, page_data + page_offset, bytes_to_read);
 
             size_t start_hand = sharedMemory->clockHand;
+            CachePage *page = nullptr;
+
             while (true) {
-                CachePage &page = sharedMemory->cache[sharedMemory->clockHand];
-                if (!page.used || !page.dirty) {
-                    if (page.used && page.dirty) {
-                        int dirty_fd = open(page.path, O_WRONLY);
-                        if (dirty_fd != -1) {
-                            lseek(dirty_fd, page.offset, SEEK_SET);
-                            write(dirty_fd, page.data, PAGE_SIZE);
-                            close(dirty_fd);
+                CachePage &current_page = sharedMemory->cache[sharedMemory->clockHand];
+                if (!current_page.used || !current_page.dirty) {
+                    if (current_page.used && current_page.dirty) {
+                        int file_fd = open(current_page.path, O_WRONLY);
+                        if (file_fd != -1) {
+                            lseek(file_fd, current_page.offset, SEEK_SET);
+                            write(file_fd, current_page.data, PAGE_SIZE);
+                            close(file_fd);
                         }
                     }
+                    current_page.used = true;
+                    current_page.dirty = false;
+                    strcpy(current_page.path, fileDesc.path.c_str());
+                    current_page.offset = page_aligned_offset;
 
-                    page.used = true;
-                    page.dirty = false;
-                    strcpy(page.path, fileDesc.path.c_str());
-                    page.offset = offset;
-                    memcpy(page.data, page_data, PAGE_SIZE);
+                    std::memcpy(current_page.data, chunk, bytes_to_read);
+                    page = &current_page;
                     break;
                 }
+
                 sharedMemory->clockHand = (sharedMemory->clockHand + 1) % GLOBAL_CACHE_SIZE;
                 if (sharedMemory->clockHand == start_hand) {
-
                     CachePage &forced_page = sharedMemory->cache[sharedMemory->clockHand];
-                    if (forced_page.dirty) {
-                        int dirty_fd = open(forced_page.path, O_WRONLY);
-                        if (dirty_fd != -1) {
-                            lseek(dirty_fd, forced_page.offset, SEEK_SET);
-                            write(dirty_fd, forced_page.data, PAGE_SIZE);
-                            close(dirty_fd);
-                        }
-                    }
                     forced_page.used = true;
                     forced_page.dirty = false;
                     strcpy(forced_page.path, fileDesc.path.c_str());
-                    forced_page.offset = offset;
-                    memcpy(forced_page.data, page_data, PAGE_SIZE);
+                    forced_page.offset = page_aligned_offset;
+
+                    std::memcpy(forced_page.data, chunk, bytes_to_read);
+                    page = &forced_page;
                     break;
                 }
+            }
+
+            if (!page) {
+                pthread_mutex_unlock(&sharedMemory->mutex);
+                for (auto& [temp_chunk, size] : temp_chunks) {
+                    delete[] temp_chunk;
+                }
+                return -1;
             }
         }
 
 
+        temp_chunks.push_back({chunk, bytes_to_read});
+
+
+        bytes_read_total += bytes_to_read;
         fileDesc.cursor += bytes_to_read;
-        bytes_read += bytes_to_read;
     }
 
     pthread_mutex_unlock(&sharedMemory->mutex);
 
-    return bytes_read;
-}
 
+    size_t assembled_offset = 0;
+    for (auto& [temp_chunk, chunk_size] : temp_chunks) {
+        std::memcpy(static_cast<char*>(buf) + assembled_offset, temp_chunk, chunk_size);
+        assembled_offset += chunk_size;
+        delete[] temp_chunk;
+    }
+
+    return bytes_read_total;
+}
 
 
 ssize_t lab2_write(int fd, const char *buffer, size_t size) {
@@ -281,8 +296,10 @@ ssize_t lab2_write(int fd, const char *buffer, size_t size) {
                     memcpy(page.data, buffer + bytes_written, bytes_to_write);
                     break;
                 }
+
                 sharedMemory->clockHand = (sharedMemory->clockHand + 1) % GLOBAL_CACHE_SIZE;
                 if (sharedMemory->clockHand == start_hand) {
+
                     CachePage &forced_page = sharedMemory->cache[sharedMemory->clockHand];
                     if (forced_page.dirty) {
                         int file_fd = open(forced_page.path, O_WRONLY);
@@ -292,6 +309,7 @@ ssize_t lab2_write(int fd, const char *buffer, size_t size) {
                             close(file_fd);
                         }
                     }
+
                     forced_page.used = true;
                     forced_page.dirty = true;
                     strcpy(forced_page.path, fileDesc.path.c_str());
@@ -301,6 +319,7 @@ ssize_t lab2_write(int fd, const char *buffer, size_t size) {
                 }
             }
         }
+
 
         fileDesc.cursor += bytes_to_write;
         bytes_written += bytes_to_write;
@@ -373,6 +392,7 @@ int lab2_fsync(int fd) {
     for (size_t i = 0; i < GLOBAL_CACHE_SIZE; i++) {
         CachePage &page = sharedMemory->cache[i];
 
+
         if (page.dirty && strcmp(page.path, fileDesc.path.c_str()) == 0) {
             int file_fd = open(page.path, O_WRONLY);
             if (file_fd == -1) {
@@ -381,7 +401,7 @@ int lab2_fsync(int fd) {
                 return -1;
             }
 
-            // Seek to the offset and write the page data
+
             if (lseek(file_fd, page.offset, SEEK_SET) == -1 ||
                 write(file_fd, page.data, PAGE_SIZE) != PAGE_SIZE) {
                 std::cerr << "Error: failed to write dirty page to disk at offset " << page.offset << std::endl;
