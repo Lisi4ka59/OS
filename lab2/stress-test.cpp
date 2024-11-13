@@ -8,7 +8,6 @@
 #include <cstring>
 
 
-// Declare functions from the library
 extern "C" {
 int lab2_open(const char *path, int flags);
 int lab2_close(int fd);
@@ -45,11 +44,12 @@ int main() {
 
     ssize_t bytes_written = lab2_write(fd, buffer, buf_size);
     if (bytes_written != buf_size) {
-        std::cerr << "Error writing file.\n";
+        std::cerr << "Error writing file. Asked "<<  buf_size<<" did "<<bytes_written<<"\n";
         return 1;
     }
 
     pwrite(control_fd, buffer, buf_size, 0);
+    fsync(control_fd);
 
 
     if (lab2_fsync(fd) < 0) {
@@ -61,21 +61,22 @@ int main() {
 
         char new_buffer[buf_size];
         char new_control_buffer[buf_size];
+
         ssize_t bytes_read = lab2_read(fd, new_buffer, buf_size);
         if (bytes_read != buf_size) {
-            std::cerr << "Error reading file.\n";
-            break;
+            std::cerr << "Error reading file. Asked " << buf_size << " got " << bytes_read << "\n";
+            return 1;
         }
 
-        ssize_t control_bytes_read = pread(fd, new_control_buffer, buf_size, 0);
-
+        ssize_t control_bytes_read = pread(control_fd, new_control_buffer, buf_size, 0);
         if (control_bytes_read != buf_size) {
-            std::cerr << "Error reading control file.\n";
-            break;
+            std::cerr << "Error reading control file. Asked " << buf_size << " got " << control_bytes_read << "\n";
+            return 1;
         }
 
         if (memcmp(new_buffer, new_control_buffer, buf_size) != 0) {
-            std::cerr << "Buffers are not equal.\n";
+            std::cerr << "Buffers are not equal." << std::endl;
+            return 1;
         }
 
 
