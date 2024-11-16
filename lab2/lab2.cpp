@@ -193,10 +193,9 @@ ssize_t lab2_read(int fd, void *buf, size_t count) {
                     }
                     current_page.used = true;
                     current_page.dirty = false;
-                    strcpy(current_page.path, fileDesc.path.c_str());
+                    strlcpy(current_page.path, fileDesc.path.c_str(), ABSOLUTE_PATH_LENGTH);
                     current_page.offset = page_aligned_offset;
                     std::memcpy(current_page.data, chunk, bytes_to_read);
-                    page = &current_page;
                     std::cerr << "Loaded page into cache at offset " << page_aligned_offset
                               << ", with last byte in chunk: " << static_cast<int>(chunk[bytes_to_read - 1]) << "\n";
                     break;
@@ -206,10 +205,9 @@ ssize_t lab2_read(int fd, void *buf, size_t count) {
                     CachePage &forced_page = sharedMemory->cache[sharedMemory->clockHand];
                     forced_page.used = true;
                     forced_page.dirty = false;
-                    strcpy(forced_page.path, fileDesc.path.c_str());
+                    strlcpy(forced_page.path, fileDesc.path.c_str(), ABSOLUTE_PATH_LENGTH);
                     forced_page.offset = page_aligned_offset;
                     std::memcpy(forced_page.data, chunk, bytes_to_read);
-                    page = &forced_page;
                     std::cerr << "Evicted and loaded new page into cache at offset " << page_aligned_offset
                               << ", with last byte in chunk: " << static_cast<int>(chunk[bytes_to_read - 1]) << "\n";
                     break;
@@ -269,7 +267,7 @@ ssize_t lab2_write(int fd, const char *buffer, size_t size) {
                     }
                     page.used = true;
                     page.dirty = true;
-                    strcpy(page.path, fileDesc.path.c_str());
+                    strlcpy(page.path, fileDesc.path.c_str(), ABSOLUTE_PATH_LENGTH);
                     page.offset = offset;
                     memcpy(page.data, buffer + bytes_written, bytes_to_write);
                     break;
@@ -287,7 +285,7 @@ ssize_t lab2_write(int fd, const char *buffer, size_t size) {
                     }
                     forced_page.used = true;
                     forced_page.dirty = true;
-                    strcpy(forced_page.path, fileDesc.path.c_str());
+                    strlcpy(forced_page.path, fileDesc.path.c_str(), ABSOLUTE_PATH_LENGTH);
                     forced_page.offset = offset;
                     memcpy(forced_page.data, buffer + bytes_written, bytes_to_write);
                     break;
