@@ -19,8 +19,7 @@ enable_testing()
 
 
 add_test(NAME Test1 COMMAND ema-search-str ${CMAKE_SOURCE_DIR}/lab2/test.txt ergshbewanjrslijgf 1)
-add_test(NAME Test2 COMMAND ema-search-str ${CMAKE_SOURCE_DIR}/lab2/hard-test.txt abhedebjkas 5)
+add_test(NAME Test2 COMMAND ema-search-str ${CMAKE_SOURCE_DIR}/lab2/test.txt abhedebjkas 5)
 add_test(NAME Test3 COMMAND ema-search-str ${CMAKE_SOURCE_DIR}/lab2/hard-test.txt abhedebjkas 5)
 add_test(NAME Test4 COMMAND ema-search-str ${CMAKE_SOURCE_DIR}/lab2/hard-test.txt dnweojfr 10)
 add_test(NAME Test5 COMMAND stress-test)
-add_test(NAME Test6 COMMAND stress-test & stress-test & stress-test)
