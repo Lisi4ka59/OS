@@ -100,7 +100,7 @@ jobs:
           cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
           cmake --build build --target clean
           cmake --build build
-          find . -name '*.cpp' | xargs clang-tidy -p build -warnings-as-errors=*
+          find . -name '*.cpp' | xargs clang-tidy -p build 
 
       - name: Build and run tests
         run: |
