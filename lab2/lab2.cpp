@@ -223,13 +223,13 @@ void flush_dirty_page(CachePage &page, int fd) {
 }
 
 // Находим страницу которую можно выкинуть
-CachePage &get_cache_page_to_replace(int fd) {
+CachePage *get_cache_page_to_replace(int fd) {
     while (true) {
         CachePage &page = sharedMemory->cache[sharedMemory->clockHand];
         if (!page.used) {
             flush_dirty_page(page, fd);
             sharedMemory->clockHand = (sharedMemory->clockHand + 1) % GLOBAL_CACHE_SIZE;
-            return page;
+            return &page;
         }
         page.used = false;
         sharedMemory->clockHand = (sharedMemory->clockHand + 1) % GLOBAL_CACHE_SIZE;
@@ -268,7 +268,7 @@ ssize_t lab2_read(int fd, void *buf, size_t count) {
                 break;
             }
 
-            CachePage &current_page = get_cache_page_to_replace(fd);
+            CachePage &current_page = *get_cache_page_to_replace(fd);
             update_cache_page(current_page, fileDesc.inode, page_aligned_offset, chunk, bytes_to_read);
         } else {
             memcpy(chunk, page->data + page_offset, bytes_to_read);
@@ -312,7 +312,7 @@ ssize_t lab2_write(int fd, const char *buffer, size_t size) {
             page->dirty = true;
         } else {
             // если страница не нашлась, то подрубаем клок и вытесняем и загружаем нужную страницу
-            CachePage &current_page = get_cache_page_to_replace(fd);
+            CachePage &current_page = *get_cache_page_to_replace(fd);
             update_cache_page(current_page, fileDesc.inode, offset, buffer + bytes_written, bytes_to_write);
             current_page.dirty = true;
             }
