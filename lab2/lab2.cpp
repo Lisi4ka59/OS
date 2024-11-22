@@ -374,7 +374,7 @@ off_t lab2_lseek(int fd, off_t offset, int whence) {
     return new_offset;
 }
 
-// Синхронизация
+
 int lab2_fsync(int fd) {
     found_file_descriptor(fd);
     FileDescriptor &fileDesc = fileDescriptors[fd];
