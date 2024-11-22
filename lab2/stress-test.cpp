@@ -20,8 +20,7 @@ void initialize_library();
 constexpr size_t PAGE_SIZE = 4096;
 
 int main() {
-    size_t buf_size = 10000000;
-    buf_size = buf_size + PAGE_SIZE - 1;
+    size_t buf_size = PAGE_SIZE * 16 * 16; // Плюс минус 1 мегабайт
 
     initialize_library();
 
@@ -40,13 +39,13 @@ int main() {
     }
 
     char *buffer;
-    if (posix_memalign(reinterpret_cast<void**>(&buffer), PAGE_SIZE, buf_size) != 0) {
+    if (posix_memalign(reinterpret_cast<void **>(&buffer), PAGE_SIZE, buf_size) != 0) {
         std::cerr << "Error allocating aligned buffer.\n";
         lab2_close(fd);
         close(control_fd);
         return 1;
     }
-    std::cout << "Allocated buffer at address: " << static_cast<void*>(buffer) << "\n";
+    std::cout << "Allocated buffer at address: " << static_cast<void *>(buffer) << "\n";
 
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -65,7 +64,16 @@ int main() {
         return 1;
     }
 
-    pwrite(control_fd, buffer, buf_size, 0);
+    ssize_t control_bytes_written = pwrite(control_fd, buffer, buf_size, 0);
+    if (control_bytes_written != buf_size) {
+        std::cerr << "Error writing control file. Written: " << control_bytes_written << " Expected: " << buf_size
+                  << "\n";
+        free(buffer);
+        lab2_close(fd);
+        close(control_fd);
+        return 1;
+    }
+
 
     if (lab2_fsync(fd) < 0) {
         std::cerr << "Error syncing file with lab2_fsync.\n";
@@ -76,16 +84,16 @@ int main() {
     }
 
     char *new_buffer, *new_control_buffer;
-    if (posix_memalign(reinterpret_cast<void**>(&new_buffer), PAGE_SIZE, buf_size) != 0) {
+    if (posix_memalign(reinterpret_cast<void **>(&new_buffer), PAGE_SIZE, buf_size) != 0) {
         std::cerr << "Error allocating aligned new_buffer.\n";
         free(buffer);
         lab2_close(fd);
         close(control_fd);
         return 1;
     }
-    std::cout << "Allocated new_buffer at address: " << static_cast<void*>(new_buffer) << "\n";
+    std::cout << "Allocated new_buffer at address: " << static_cast<void *>(new_buffer) << "\n";
 
-    if (posix_memalign(reinterpret_cast<void**>(&new_control_buffer), PAGE_SIZE, buf_size) != 0) {
+    if (posix_memalign(reinterpret_cast<void **>(&new_control_buffer), PAGE_SIZE, buf_size) != 0) {
         std::cerr << "Error allocating aligned new_control_buffer.\n";
         free(new_buffer);
         free(buffer);
@@ -93,7 +101,7 @@ int main() {
         close(control_fd);
         return 1;
     }
-    std::cout << "Allocated new_control_buffer at address: " << static_cast<void*>(new_control_buffer) << "\n";
+    std::cout << "Allocated new_control_buffer at address: " << static_cast<void *>(new_control_buffer) << "\n";
 
     for (int i = 0; i < 10; i++) {
         lab2_lseek(fd, 0, SEEK_SET);
@@ -106,7 +114,8 @@ int main() {
 
         ssize_t control_bytes_read = pread(control_fd, new_control_buffer, buf_size, 0);
         if (control_bytes_read != buf_size) {
-            std::cerr << "Error reading control file. Bytes read: " << control_bytes_read << " Expected: " << buf_size << "\n";
+            std::cerr << "Error reading control file. Bytes read: " << control_bytes_read << " Expected: " << buf_size
+                      << "\n";
             break;
         }
 
@@ -117,7 +126,8 @@ int main() {
                 if (new_buffer[j] != new_control_buffer[j]) {
                     std::cerr << "Difference at byte " << j
                               << ": new_buffer[" << j << "] = " << static_cast<int>(new_buffer[j])
-                              << ", new_control_buffer[" << j << "] = " << static_cast<int>(new_control_buffer[j]) << "\n";
+                              << ", new_control_buffer[" << j << "] = " << static_cast<int>(new_control_buffer[j])
+                              << "\n";
                     break;
                 }
             }
@@ -133,7 +143,8 @@ int main() {
         lab2_lseek(fd, 0, SEEK_SET);
         ssize_t new_bytes_written = lab2_write(fd, new_buffer, buf_size);
         if (new_bytes_written != buf_size) {
-            std::cerr << "Error writing file at iteration " << i << ". Written: " << new_bytes_written << " Expected: " << buf_size << "\n";
+            std::cerr << "Error writing file at iteration " << i << ". Written: " << new_bytes_written << " Expected: "
+                      << buf_size << "\n";
             break;
         }
 
