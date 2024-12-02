@@ -16,7 +16,7 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
-  build:
+  test_lab1:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -78,5 +78,33 @@ jobs:
           fi
 
 
+  test_lab2:
+    runs-on: ubuntu-latest
 
-          
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ build-essential cmake clang-format clang-tidy
+
+      - name: Format code with clang-format
+        run: |
+          clang-format --version
+          find . -name '*.cpp' -o -name '*.h' | xargs clang-format -i --dry-run
+
+      - name: Lint code with clang-tidy
+        run: |
+          clang-tidy --version
+          cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build build --target clean
+          cmake --build build
+          find . -name '*.cpp' | xargs clang-tidy -p build -warnings-as-errors=*
+
+      - name: Build and run tests
+        run: |
+          cmake -S . -B build
+          cmake --build build
+          cd build
+          ctest --output-on-failure
